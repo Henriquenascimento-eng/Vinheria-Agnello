@@ -1,88 +1,109 @@
-# Sistema de Monitoramento de Luminosidade – Vinheria Agnello
+# 💡 Monitor de Luminosidade com Arduino
 
-## Descrição do Projeto
-
-Este sistema foi desenvolvido para a **Vinheria Agnello** como parte da primeira etapa de um projeto de monitoramento ambiental.
-
-O objetivo principal é capturar e monitorar os níveis de luminosidade no ambiente de armazenamento dos vinhos.
-
-A luz é um fator crítico na conservação vinícola, pois a exposição excessiva pode causar reações químicas indesejadas que alteram o sabor, a cor e a qualidade da bebida.
-
-Utilizando um **Arduino UNO** e um **sensor LDR**, o sistema garante que qualquer desvio nos níveis de luminosidade seja detectado imediatamente, permitindo ações rápidas para preservar a integridade dos vinhos.
+Projeto de monitoramento de luminosidade ambiente utilizando sensor LDR, display LCD 16x2, LEDs indicadores e buzzer. Desenvolvido para a disciplina de **Engenharia de Software**.
 
 ---
 
-## Funcionamento do Sistema
+## 📋 Descrição
 
-O sistema opera através da leitura analógica de um sensor de luz (**LDR**) e aciona diferentes estados de alerta conforme o nível de luminosidade detectado.
+O sistema lê continuamente a intensidade de luz do ambiente através de um sensor LDR (Light Dependent Resistor) e classifica o nível em três estados:
 
-### 1. Leitura de Dados
+| Estado | Condição (leitura analógica) | LED ativo | Buzzer |
+|--------|------------------------------|-----------|--------|
+| **BOM** | > 850 | Verde | Silencioso |
+| **MÉDIA** | 400 – 850 | Amarelo | Bipe intermitente (1000 Hz) |
+| **RUIM** | < 400 | Vermelho | Tom contínuo (3000 Hz) |
 
-O sensor **LDR (Light Dependent Resistor)** varia sua resistência de acordo com a intensidade da luz ambiente.
-
-O Arduino converte essa variação em um valor digital que vai de **0 a 1023**, permitindo a análise do nível de luminosidade.
-
----
-
-### 2. Classificação dos Níveis
-
-#### 🟢 Ideal (Verde)
-
-Luminosidade dentro dos parâmetros seguros para a conservação dos vinhos.
-
-- LED verde aceso
-- Nenhum alerta sonoro
+O estado atual é exibido no LCD junto com o valor bruto da leitura.
 
 ---
 
-#### 🟡 Alerta (Amarelo)
+## 🛠️ Hardware necessário
 
-Nível de luz acima do ideal.
-
-- LED amarelo aceso
-- O buzzer soa por **3 segundos**
-- Caso a luminosidade permaneça alta, o alarme se repete
-
----
-
-#### 🔴 Crítico (Vermelho)
-
-Nível de luminosidade perigoso para o armazenamento adequado dos vinhos.
-
-- LED vermelho aceso
-- Indicação de risco elevado à conservação
+- 1× Arduino Uno (ou compatível)
+- 1× Sensor LDR
+- 1× Resistor de 10 kΩ (divisor de tensão para o LDR)
+- 1× Display LCD 16×2 (compatível com LiquidCrystal)
+- 1× LED Verde
+- 1× LED Amarelo
+- 1× LED Vermelho
+- 3× Resistores de 220 Ω (para os LEDs)
+- 1× Buzzer passivo
+- Jumpers e protoboard
 
 ---
 
-## Componentes do Projeto
+## 🔌 Mapeamento de pinos
 
-| Componente | Quantidade | Função |
-|---|---:|---|
-| Arduino UNO | 1 | Cérebro do sistema e processamento |
-| Sensor LDR | 1 | Medição da luz ambiente |
-| Resistor 10kΩ | 1 | Utilizado no divisor de tensão do sensor |
-| LED Verde | 1 | Indica luminosidade ideal |
-| LED Amarelo | 1 | Indica estado de alerta |
-| LED Vermelho | 1 | Indica estado crítico |
-| Buzzer | 1 | Alarme sonoro para notificações |
-| Resistores 220Ω | 3 | Proteção para evitar queimar os LEDs |
-| Protoboard | 1 | Estrutura de montagem do circuito |
-| Jumpers | Vários | Conexões entre os componentes |
-
----
-
-## Objetivo do Projeto
-
-Garantir o monitoramento contínuo da luminosidade no ambiente da vinheria, reduzindo riscos de degradação dos vinhos e contribuindo para a preservação da qualidade do produto armazenado.
+| Componente | Pino Arduino |
+|------------|-------------|
+| LCD RS | 2 |
+| LCD Enable | 3 |
+| LCD D4 | 4 |
+| LCD D5 | 5 |
+| LCD D6 | 6 |
+| LCD D7 | 7 |
+| LED Verde | 8 |
+| LED Amarelo | 9 |
+| LED Vermelho | 10 |
+| Buzzer | 11 |
+| LDR | A0 |
 
 ---
 
-## Integrantes
+## 📦 Dependências
 
-- Henrique da Silva — RM: 569137  
-- Andrey Luigi — RM: 569575  
-- Nicolas Moreira Silva — RM: 571510  
-- Gabriel Juarez — RM: 563680  
-- Lucas Trevisan — RM: 569731  
+- [LiquidCrystal](https://www.arduino.cc/reference/en/libraries/liquidcrystal/) — biblioteca padrão da Arduino IDE (já incluída).
+
+---
+
+## 🚀 Como usar
+
+1. Monte o circuito conforme o mapeamento de pinos acima.
+2. Abra o arquivo `.ino` na **Arduino IDE**.
+3. Selecione a placa e a porta serial corretas em **Ferramentas**.
+4. Clique em **Upload** para carregar o código.
+5. Ao iniciar, o LCD exibirá a mensagem `Eng. Software / Monitor Luz` por 2 segundos.
+6. Em seguida, o monitor exibirá em tempo real o valor do sensor e o status de luminosidade.
+
+Você também pode acompanhar os valores brutos do LDR pelo **Monitor Serial** a 9600 bps.
+
+---
+
+## 🧠 Lógica de funcionamento
+
+```
+setup()
+  ├── Configura pinos dos LEDs e buzzer como OUTPUT
+  ├── Inicia comunicação serial (9600 bps)
+  └── Exibe mensagem de boas-vindas no LCD por 2s
+
+loop()  (executa a cada 500 ms)
+  ├── Lê valor analógico do LDR (0–1023)
+  ├── Classifica em estado: BOM / MÉDIA / RUIM
+  ├── Aciona o LED correspondente
+  ├── Controla o buzzer conforme o estado
+  └── Atualiza o display LCD
+```
+
+---
+
+## 📁 Estrutura do projeto
+
+```
+monitor-luminosidade/
+├── monitor_luminosidade.ino   # Código principal
+└── README.md
+```
+
+---
+
+## 👥 Integrantes
+
+- Henrique da Silva — RM: 569137
+- Andrey Luigi — RM: 569575
+- Nicolas Moreira Silva — RM: 571510
+- Gabriel Juarez — RM: 563680
+- Lucas Trevisan — RM: 569731
 
 ---
