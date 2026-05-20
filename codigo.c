@@ -1,101 +1,139 @@
+// Projeto Arduino UNO - Monitor de Ambiente
+// Componentes:
+// - Sensor DHT22
+// - Sensor LDR
+// - LCD 16x2
+// - LEDs (vermelho, amarelo, verde)
+// - Buzzer
+
 #include <LiquidCrystal.h>
+#include <DHT.h>
 
-// LCD ligado nos pinos 2,3,4,5,6,7
-LiquidCrystal lcd(2, 3, 4, 5, 6, 7);
+// -------------------- PINOS --------------------
 
-// Sensores e atuadores
-const int pinLDR      = A0;
-const int pinVerde    = 8;
-const int pinAmarelo  = 9;
-const int pinVermelho = 10;
-const int pinBuzzer   = 11;
+// LEDs
+#define LED_VERMELHO 4
+#define LED_AMARELO  3
+#define LED_VERDE    2
 
-int estadoAnterior = -1;
+// Buzzer
+#define BUZZER 5
+
+// LDR
+#define LDR_PIN A5
+
+// DHT22
+#define DHTPIN 10
+#define DHTTYPE DHT22
+
+// LCD (RS, E, D4, D5, D6, D7)
+LiquidCrystal lcd(13, 11, 9, 8, 7, 6);
+
+// Inicializa DHT
+DHT dht(DHTPIN, DHTTYPE);
+
+// -------------------- VARIÁVEIS --------------------
+
+float temperatura;
+float umidade;
+int luminosidade;
+
+// -------------------- SETUP --------------------
 
 void setup() {
 
-  pinMode(pinVerde, OUTPUT);
-  pinMode(pinAmarelo, OUTPUT);
-  pinMode(pinVermelho, OUTPUT);
-  pinMode(pinBuzzer, OUTPUT);
+  // LEDs
+  pinMode(LED_VERMELHO, OUTPUT);
+  pinMode(LED_AMARELO, OUTPUT);
+  pinMode(LED_VERDE, OUTPUT);
 
-  Serial.begin(9600);
+  // Buzzer
+  pinMode(BUZZER, OUTPUT);
 
-  // Inicia LCD
+  // LCD
   lcd.begin(16, 2);
+
+  // DHT
+  dht.begin();
 
   // Mensagem inicial
   lcd.setCursor(0, 0);
-  lcd.print("Eng. Software");
-
+  lcd.print("Sistema ON");
   lcd.setCursor(0, 1);
-  lcd.print("Monitor Luz");
+  lcd.print("Inicializando");
 
   delay(2000);
-
   lcd.clear();
 }
 
+// -------------------- LOOP --------------------
+
 void loop() {
 
+  // Leitura do DHT22
+  temperatura = dht.readTemperature();
+  umidade = dht.readHumidity();
+
   // Leitura do LDR
-  int leitura = analogRead(pinLDR);
+  luminosidade = analogRead(LDR_PIN);
 
-  Serial.println(leitura);
+  // ---------------- LCD ----------------
 
-  // Estados
-  int estado;
+  lcd.clear();
 
-  if (leitura > 850) {
-    estado = 0; // BOM
-  }
-  else if (leitura >= 400) {
-    estado = 1; // MEDIA
-  }
-  else {
-    estado = 2; // RUIM
-  }
-
-  // LEDs
-  digitalWrite(pinVerde, estado == 0);
-  digitalWrite(pinAmarelo, estado == 1);
-  digitalWrite(pinVermelho, estado == 2);
-
-  // BUZZER
-  if (estado == 0) {
-
-    noTone(pinBuzzer);
-
-  }
-  else if (estado == 1) {
-
-    tone(pinBuzzer, 1000, 200);
-
-  }
-  else {
-
-    tone(pinBuzzer, 3000);
-
-  }
-
-  // LCD
   lcd.setCursor(0, 0);
-  lcd.print("Luz: ");
-  lcd.print(leitura);
-  lcd.print("    ");
+  lcd.print("T:");
+  lcd.print(temperatura);
+  lcd.print("C ");
+
+  lcd.print("U:");
+  lcd.print(umidade);
+  lcd.print("%");
 
   lcd.setCursor(0, 1);
+  lcd.print("Luz:");
+  lcd.print(luminosidade);
 
-  if (estado == 0) {
+  // ---------------- CONTROLE LEDs ----------------
 
-    lcd.print("Status: BOM" );
+  // Apaga todos primeiro
+  digitalWrite(LED_VERDE, LOW);
+  digitalWrite(LED_AMARELO, LOW);
+  digitalWrite(LED_VERMELHO, LOW);
+
+  // Temperatura baixa
+  if (temperatura < 18) {
+
+    digitalWrite(LED_VERDE, HIGH);
+    noTone(BUZZER);
 
   }
+
+  // Temperatura media
+  else if (temperatura >= 18 && temperatura < 30) {
+
+    digitalWrite(LED_AMARELO, HIGH);
+    noTone(BUZZER);
+
+  }
+
+  // Temperatura alta
   else {
 
-    lcd.print("Alerta: Temp Alta");
+    digitalWrite(LED_VERMELHO, HIGH);
+
+    // Liga buzzer
+    tone(BUZZER, 1000);
 
   }
 
-  delay(500);
+  // Alerta de pouca luz
+  if (luminosidade < 300) {
+
+    lcd.setCursor(0, 1);
+    lcd.print("Ambiente Escuro");
+
+  }
+
+  delay(2000);
 }
