@@ -98,6 +98,9 @@ monitor-luminosidade/
 
 ---
 
+## video
+https://youtu.be/C41ctrM9FuM?si=_bdTtfzcKqtXwL8j
+
 ## 👥 Integrantes
 
 - Henrique da Silva — RM: 569137
