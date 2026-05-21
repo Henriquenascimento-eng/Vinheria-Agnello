@@ -1,139 +1,164 @@
-// Projeto Arduino UNO - Monitor de Ambiente
-// Componentes:
-// - Sensor DHT22
-// - Sensor LDR
-// - LCD 16x2
-// - LEDs (vermelho, amarelo, verde)
-// - Buzzer
-
-#include <LiquidCrystal.h>
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
 #include <DHT.h>
 
-// -------------------- PINOS --------------------
+// ================= LEDs =================
 
-// LEDs
+#define LED_VERDE 2
+#define LED_AMARELO 3
 #define LED_VERMELHO 4
-#define LED_AMARELO  3
-#define LED_VERDE    2
 
-// Buzzer
+// ================= Buzzer =================
+
 #define BUZZER 5
 
-// LDR
-#define LDR_PIN A5
+// ================= LDR =================
 
-// DHT22
+#define LDR_PIN A0
+
+// ================= DHT =================
+
 #define DHTPIN 10
-#define DHTTYPE DHT22
+#define DHTTYPE DHT11
 
-// LCD (RS, E, D4, D5, D6, D7)
-LiquidCrystal lcd(13, 11, 9, 8, 7, 6);
-
-// Inicializa DHT
 DHT dht(DHTPIN, DHTTYPE);
 
-// -------------------- VARIÁVEIS --------------------
+// ================= LCD =================
+
+LiquidCrystal_I2C lcd(0x27, 16, 2);
+
+// ================= Variáveis =================
 
 float temperatura;
 float umidade;
 int luminosidade;
 
-// -------------------- SETUP --------------------
-
 void setup() {
 
-  // LEDs
-  pinMode(LED_VERMELHO, OUTPUT);
-  pinMode(LED_AMARELO, OUTPUT);
-  pinMode(LED_VERDE, OUTPUT);
+  Serial.begin(9600);
 
-  // Buzzer
+  pinMode(LED_VERDE, OUTPUT);
+  pinMode(LED_AMARELO, OUTPUT);
+  pinMode(LED_VERMELHO, OUTPUT);
+
   pinMode(BUZZER, OUTPUT);
 
-  // LCD
-  lcd.begin(16, 2);
+  lcd.init();
+  lcd.backlight();
 
-  // DHT
   dht.begin();
 
-  // Mensagem inicial
-  lcd.setCursor(0, 0);
+  lcd.setCursor(0,0);
   lcd.print("Sistema ON");
-  lcd.setCursor(0, 1);
+
+  lcd.setCursor(0,1);
   lcd.print("Inicializando");
 
   delay(2000);
+
   lcd.clear();
 }
 
-// -------------------- LOOP --------------------
-
 void loop() {
 
-  // Leitura do DHT22
+  // ================= Leituras =================
+
   temperatura = dht.readTemperature();
   umidade = dht.readHumidity();
 
-  // Leitura do LDR
   luminosidade = analogRead(LDR_PIN);
 
-  // ---------------- LCD ----------------
+  // ================= Verifica erro =================
+
+  if (isnan(temperatura) || isnan(umidade)) {
+
+    lcd.clear();
+
+    lcd.setCursor(0,0);
+    lcd.print("Erro no DHT");
+
+    delay(2000);
+
+    return;
+  }
+
+  // ================= LCD =================
 
   lcd.clear();
 
-  lcd.setCursor(0, 0);
+  // Linha 1
+  lcd.setCursor(0,0);
+
   lcd.print("T:");
-  lcd.print(temperatura);
-  lcd.print("C ");
+  lcd.print(temperatura,1);
 
-  lcd.print("U:");
-  lcd.print(umidade);
-  lcd.print("%");
+  lcd.print(" U:");
+  lcd.print(umidade,0);
 
-  lcd.setCursor(0, 1);
-  lcd.print("Luz:");
-  lcd.print(luminosidade);
+  // ================= LEDs =================
 
-  // ---------------- CONTROLE LEDs ----------------
-
-  // Apaga todos primeiro
   digitalWrite(LED_VERDE, LOW);
   digitalWrite(LED_AMARELO, LOW);
   digitalWrite(LED_VERMELHO, LOW);
 
-  // Temperatura baixa
-  if (temperatura < 18) {
+  noTone(BUZZER);
 
+  // =================================================
+  // AMBIENTE ESCURO
+  // =================================================
+
+  if (luminosidade > 700) {
+
+    lcd.setCursor(0,1);
+    lcd.print("Amb Escuro");
+
+    // LED VERDE
     digitalWrite(LED_VERDE, HIGH);
-    noTone(BUZZER);
-
   }
 
-  // Temperatura media
-  else if (temperatura >= 18 && temperatura < 30) {
+  // =================================================
+  // AMBIENTE MODERADO
+  // =================================================
 
+  else if (luminosidade > 300 && luminosidade <= 700) {
+
+    lcd.setCursor(0,1);
+    lcd.print("Amb Moderado");
+
+    // LED AMARELO
     digitalWrite(LED_AMARELO, HIGH);
-    noTone(BUZZER);
 
-  }
-
-  // Temperatura alta
-  else {
-
-    digitalWrite(LED_VERMELHO, HIGH);
-
-    // Liga buzzer
+    // Bip intervalado
     tone(BUZZER, 1000);
 
+    delay(200);
+
+    noTone(BUZZER);
+
+    delay(800);
   }
 
-  // Alerta de pouca luz
-  if (luminosidade < 300) {
+  // =================================================
+  // AMBIENTE CLARO
+  // =================================================
 
-    lcd.setCursor(0, 1);
-    lcd.print("Ambiente Escuro");
+  else {
 
+    lcd.setCursor(0,1);
+    lcd.print("Amb Claro");
+
+    // LED VERMELHO
+    digitalWrite(LED_VERMELHO, HIGH);
+
+    // Bip mais rápido
+    tone(BUZZER, 1500);
+
+    delay(100);
+
+    noTone(BUZZER);
+
+    delay(300);
   }
 
-  delay(2000);
+  delay(1000);
 }
