@@ -2,6 +2,8 @@
 
 Sistema de monitoramento ambiental para a Vinheria Agnello, desenvolvido com Arduino Uno. O projeto combina sensores de **temperatura/umidade (DHT22)** e **luminosidade (LDR)** com feedback visual (LEDs), sonoro (Buzzer) e textual (Display LCD 16x2).
 
+https://youtu.be/9yAoD34qhvE?si=HEgTdz90to-aNpd1
+
 ---
 
 ## 📋 Componentes Utilizados
